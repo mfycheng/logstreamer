@@ -34,6 +34,7 @@ var (
 						ws.onmessage = function (evt) {
 							div = document.getElementById("out");
 							div.innerHTML += evt.data + "<br/>";
+							window.scrollTo(0, document.body.scrollHeight);
 						};
 
 						ws.onerror = function() {

@@ -9,7 +9,7 @@ import (
 
 // LogEntry represents a log entry. The log number indicates the log
 // number since the start of the stream. If an observer observes a
-// gap in log numbers, then they have lost log lines. This is caused
+// gap in log numbers, then they have lost log entries. This is caused
 // by the observer not being able to process logs as fast as they're
 // being generated.
 type LogEntry struct {
@@ -19,7 +19,7 @@ type LogEntry struct {
 }
 
 // BufferedLogStream is a buffered stream of logs. It allows observers
-// to view X amount of lines in the past upon creation.
+// to view X amount of entries in the past upon creation.
 type BufferedLogStream struct {
 	head     int
 	len      int
@@ -31,11 +31,11 @@ type BufferedLogStream struct {
 	observers      map[int]chan<- LogEntry
 }
 
-// NewBufferedLogStream creates a new BufferedLogStream, with maxLines
-// as the buffer size (in log entries).
-func NewBufferedLogStream(maxLines int) *BufferedLogStream {
+// NewBufferedLogStream creates a new BufferedLogStream, with maxEntries
+// as the buffer size.
+func NewBufferedLogStream(maxEntries int) *BufferedLogStream {
 	return &BufferedLogStream{
-		history:   make([]LogEntry, maxLines),
+		history:   make([]LogEntry, maxEntries),
 		observers: make(map[int]chan<- LogEntry),
 	}
 }
@@ -98,7 +98,7 @@ func (b *BufferedLogStream) NewObserver() StreamObserver {
 	return obs
 }
 
-// StreamObserver is an observer to a stream. Logs are sent through
+// StreamObserver is an observer to a stream. Log entries are sent through
 // the streams channel. Users of StreamObserver should call Close()
 // when finished with the observer.
 type StreamObserver struct {

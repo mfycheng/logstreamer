@@ -11,7 +11,7 @@ import (
 
 var (
 	host = flag.String("host", "localhost", "Host of the streamer")
-	port = flag.Int("port", 9998, "Port of the streamer")
+	port = flag.Int("port", 8080, "Port of the streamer")
 )
 
 func main() {

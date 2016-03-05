@@ -44,11 +44,10 @@ func NewBufferedLogStream(maxLines int) *BufferedLogStream {
 // on insertion time, not observed time.
 func (b *BufferedLogStream) WriteLine(line string) error {
 	entry := LogEntry{
+		Number:    b.totalPos,
 		Timestamp: time.Now(),
 		Line:      line,
 	}
-
-	entry.Number = b.totalPos
 
 	b.observersMut.Lock()
 	b.history[b.head] = entry
@@ -129,7 +128,7 @@ func (s *StreamObserver) Close() error {
 // StreamToWriter creates a new observer for a provided stream, and writes
 // the results to the provided writer. If skipped entries are detected,
 // a message is written to the writer indicating so.
-func StreamToWriter(stream *BufferedLogStream, w io.Writer) error {
+func StreamToWriter(stream *BufferedLogStream, w io.Writer, addTimestamps bool) (err error) {
 	obs := stream.NewObserver()
 	defer obs.Close()
 
@@ -141,7 +140,12 @@ func StreamToWriter(stream *BufferedLogStream, w io.Writer) error {
 
 		lastNumber = entry.Number
 
-		_, err := fmt.Fprintf(w, "%v - %v\n", entry.Timestamp, entry.Line)
+		if addTimestamps {
+			_, err = fmt.Fprintf(w, "%v - %v\n", entry.Timestamp.Format(time.StampMilli), entry.Line)
+		} else {
+			_, err = fmt.Fprintln(w, entry.Line)
+		}
+
 		if err != nil {
 			return err
 		}

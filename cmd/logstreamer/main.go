@@ -17,8 +17,10 @@ import (
 )
 
 var (
-	stream        = logstreamer.NewBufferedLogStream(10)
+	stream        *logstreamer.BufferedLogStream
 	listenAddress = flag.String("addr", ":8080", "Listen address")
+	maxLines      = flag.Int("maxLines", 1000, "Maximum number of lines to buffer")
+	addTimestamps = flag.Bool("timestamps", true, "Whether or not to add timestamps")
 	webSocketHTML = `
 	<html>
 		<head>
@@ -91,7 +93,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		// that don't support websockets is Opera Mini 8 (as of 5/3/2016),
 		// and cURL. Since a user can simply use logstream, or not Opera Mini 8,
 		// it's probably not worth the effort to implement long polling.
-		err := logstreamer.StreamToWriter(stream, &writerFlusher{w})
+		err := logstreamer.StreamToWriter(stream, &writerFlusher{w}, *addTimestamps)
 		if err != nil {
 			log.Println(err)
 		}
@@ -101,11 +103,13 @@ func handler(w http.ResponseWriter, req *http.Request) {
 func webSocketStream(ws *websocket.Conn) {
 	defer ws.Close()
 
-	logstreamer.StreamToWriter(stream, ws)
+	logstreamer.StreamToWriter(stream, ws, *addTimestamps)
 }
 
 func main() {
 	flag.Parse()
+
+	stream = logstreamer.NewBufferedLogStream(*maxLines)
 
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)

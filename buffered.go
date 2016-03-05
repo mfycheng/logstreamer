@@ -19,11 +19,10 @@ type LogEntry struct {
 // BufferedLogStream is a buffered stream of logs. It allows observers
 // to view X amount of lines in the past upon creation.
 type BufferedLogStream struct {
-	historyMut sync.Mutex
-	head       int
-	len        int
-	totalPos   int64
-	history    []LogEntry
+	head     int
+	len      int
+	totalPos int64
+	history  []LogEntry
 
 	observersMut   sync.Mutex
 	nextObserverID int
@@ -47,21 +46,17 @@ func (b *BufferedLogStream) WriteLine(line string) error {
 		Line:      line,
 	}
 
-	b.historyMut.Lock()
-	defer b.historyMut.Unlock()
-
 	entry.Number = b.totalPos
 
-	b.history[b.head] = entry
-
 	b.observersMut.Lock()
+	b.history[b.head] = entry
 	for _, out := range b.observers {
 		select {
 		case out <- entry:
 		default:
 		}
 	}
-	b.observersMut.Unlock()
+	defer b.observersMut.Unlock()
 
 	b.head = (b.head + 1) % len(b.history)
 	b.totalPos++
@@ -87,9 +82,6 @@ func (b *BufferedLogStream) NewObserver() StreamObserver {
 	b.observers[obs.observerID] = obs.observerChan
 	b.nextObserverID++
 
-	b.observersMut.Unlock()
-
-	b.historyMut.Lock()
 	start := (b.head - b.len) % len(b.history)
 	if start < 0 {
 		start += len(b.history)
@@ -100,7 +92,7 @@ func (b *BufferedLogStream) NewObserver() StreamObserver {
 		start = (start + 1) % len(b.history)
 	}
 
-	b.historyMut.Unlock()
+	b.observersMut.Unlock()
 
 	return obs
 }

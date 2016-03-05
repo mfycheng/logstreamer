@@ -1,6 +1,8 @@
 package logstreamer
 
 import (
+	"fmt"
+	"io"
 	"sync"
 	"time"
 )
@@ -120,6 +122,30 @@ func (s *StreamObserver) Close() error {
 	s.stream.observersMut.Unlock()
 
 	close(s.observerChan)
+
+	return nil
+}
+
+// StreamToWriter creates a new observer for a provided stream, and writes
+// the results to the provided writer. If skipped entries are detected,
+// a message is written to the writer indicating so.
+func StreamToWriter(stream *BufferedLogStream, w io.Writer) error {
+	obs := stream.NewObserver()
+	defer obs.Close()
+
+	var lastNumber int64
+	for entry := range obs.Chan() {
+		if entry.Number > lastNumber+1 {
+			fmt.Fprintf(w, "Skipping %v lines...\n", entry.Number-(lastNumber+1))
+		}
+
+		lastNumber = entry.Number
+
+		_, err := fmt.Fprintf(w, "%v - %v\n", entry.Timestamp, entry.Line)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

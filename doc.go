@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package logstreamer provides a mechanism to multiple observers to
+// Package logstreamer provides a mechanism to allow multiple observers to
 // observer log output when backpressure is not acceptable.
 package logstreamer

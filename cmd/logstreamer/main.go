@@ -51,11 +51,11 @@ var (
 	`
 )
 
-type WriterFlusher struct {
+type writerFlusher struct {
 	writer io.Writer
 }
 
-func (w *WriterFlusher) Write(p []byte) (n int, err error) {
+func (w *writerFlusher) Write(p []byte) (n int, err error) {
 	n, err = w.writer.Write(p)
 	if err != nil {
 		return n, err
@@ -91,7 +91,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		// that don't support websockets is Opera Mini 8 (as of 5/3/2016),
 		// and cURL. Since a user can simply use logstream, or not Opera Mini 8,
 		// it's probably not worth the effort to implement long polling.
-		err := logstreamer.StreamToWriter(stream, &WriterFlusher{w})
+		err := logstreamer.StreamToWriter(stream, &writerFlusher{w})
 		if err != nil {
 			log.Println(err)
 		}

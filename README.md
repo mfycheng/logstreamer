@@ -43,6 +43,5 @@ application | logstream
 
 There are still things to do, such as:
 
- * More ways to observe the stream (cURL, logstream client?, etc)
  * Configurable options for the server
  * Output log to file (with possible rotation)
